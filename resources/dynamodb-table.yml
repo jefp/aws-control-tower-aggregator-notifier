@@ -1,0 +1,16 @@
+Resources:
+  ConfigNotifierTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      # Generate a name based on the stage
+      TableName: ${self:custom.stage}-config-table
+      AttributeDefinitions:
+        - AttributeName: ConfigId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: ConfigId
+          KeyType: HASH
+      # Set the capacity based on the stage
+      ProvisionedThroughput:
+        ReadCapacityUnits: ${self:custom.tableThroughput}
+        WriteCapacityUnits: ${self:custom.tableThroughput}

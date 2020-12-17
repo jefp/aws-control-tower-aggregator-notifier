@@ -1,0 +1,60 @@
+service: control-tower-config-aggregator-notifier
+
+provider:
+  name: aws
+  runtime: python3.8
+  environment:
+    proyecto: alarm-manager
+functions:
+  notify:
+    environment:
+      DYNAMODB_TABLE: ${self:custom.stage}-config-table
+    name: ${self:service}-${opt:stage}-lambda
+    handler: functions/notify.handler
+    timeout: 30
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:DescribeTable
+          - dynamodb:Query
+          - dynamodb:Scan
+          - dynamodb:GetItem
+          - dynamodb:PutItem
+          - dynamodb:UpdateItem
+        # Restrict our IAM role permissions to
+        # the specific table for the stage
+        Resource:
+          - "Fn::GetAtt": [ ConfigNotifierTable, Arn ]
+      - Effect: Allow
+        Action:
+          - ses:send*
+        Resource:
+          -  "*"
+    events:
+      - sns:
+          arn:
+            "arn:aws:sns:us-east-1:114925583579:aws-controltower-AllConfigNotifications"
+custom:
+  stage: ${opt:stage, self:provider.stage}
+  stages:
+    - dev
+    - stg
+    - prd
+ # Set our DynamoDB throughput for prod and all other non-prod stages.
+  tableThroughputs:
+    prd: 5
+    default: 1
+  tableThroughput: ${self:custom.tableThroughputs.${self:custom.stage}, self:custom.tableThroughputs.default}
+  pythonRequirements:
+    zip: true
+    dockerizePip: true
+# Create our resources with separate CloudFormation templates
+
+
+resources:
+  # DynamoDB
+  - ${file(resources/dynamodb-table.yml)}
+
+plugins:
+  - serverless-iam-roles-per-function
+  - serverless-python-requirements
