@@ -9,6 +9,9 @@ functions:
   notify:
     environment:
       DYNAMODB_TABLE: ${self:custom.stage}-config-table
+      MASTER_ROLE_ARN: ''
+      EMAIL_SENDER: 'xxx@xxx.com'
+
     name: ${self:service}-${opt:stage}-lambda
     handler: functions/notify.handler
     timeout: 30

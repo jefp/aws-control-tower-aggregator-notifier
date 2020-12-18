@@ -99,7 +99,7 @@ def send_email(rule_config,account_tags,details):
     ReplyToAddresses=[
         os.environ['EMAIL_SENDER'],
     ],
-    Template='TEMPLATE_NAME',
+    Template=os.environ['TEMPLATE_NAME'],
     TemplateData='{'+template_data+'}'
     )
 
