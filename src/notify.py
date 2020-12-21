@@ -4,7 +4,7 @@ import os
 from contextlib import closing
 from tempfile import gettempdir
 import datetime as dt
-
+import re
 
 
 from dateutil.tz import gettz
@@ -67,7 +67,12 @@ def get_tags(account_id):
     return result
 
 def send_email(rule_config,account_tags,details):
+    print(rule_config)
+    print(account_tags)
+    print(details)
+    
     if ( rule_config['notification_enabled' ] == False):
+        print("Email not sent by configuration")
         return
     mail_config = rule_config
 
@@ -124,6 +129,18 @@ def send_email(rule_config,account_tags,details):
                     )
 
 
+    if re.match(r"[^@]+@[^@]+\.[^@]+", mail_config['primary_owner']):
+        print("Primary owner {} is valid".format(mail_config['primary_owner']))
+    else:
+        print("Email not sent. primary_owner is not valid")
+        return
+
+    if re.match(r"[^@]+@[^@]+\.[^@]+", mail_config['group_owner']):
+        print("Group owner {} is valid".format(mail_config['group_owner']))
+    else:
+        print("Email not sent. group_owner is not valid")
+        return
+
     response = ses_client.send_templated_email(
         Source=os.environ['SES_EMAIL_SENDER'],
         Destination={
@@ -131,7 +148,7 @@ def send_email(rule_config,account_tags,details):
             mail_config['primary_owner'],
             ],
             'CcAddresses': [
-            mail_config['primary_owner'],
+            mail_config['group_owner'],
             ]
     },
     ReplyToAddresses=[
