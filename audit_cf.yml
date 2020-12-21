@@ -218,11 +218,11 @@ Resources:
       DynamoTableName:
         Ref: ConfigTableDynamoDB
 Outputs:  
-  CONFIG_TABLE:    
+  ConfigTable:    
     Description: Name of the dynamodbTable
     Value: 
       Ref: ConfigTableDynamoDB
-  NOTIFY_LAMBDA_ARN:    
+  NotifyLambdaARN:    
     Description: The ARN notifier lambda function
     Value: 
       Fn::GetAtt:
