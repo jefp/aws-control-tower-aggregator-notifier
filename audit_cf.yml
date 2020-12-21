@@ -63,7 +63,7 @@ Parameters:
     MaxLength: '255'
     Default: Lambda to send email when config rule is triggered.
 Resources:
-  rdkRuleCodeLambda:
+  notifierLambda:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName:
@@ -217,3 +217,15 @@ Resources:
          Fn::GetAtt: [ InitFunction , "Arn" ]
       DynamoTableName:
         Ref: ConfigTableDynamoDB
+Outputs:  
+  CONFIG_TABLE:    
+    Description: Name of the dynamodbTable
+    Value: 
+      Ref: ConfigTableDynamoDB
+  NOTIFY_LAMBDA_ARN:    
+    Description: The ARN notifier lambda function
+    Value: 
+      Fn::GetAtt:
+      - notifierLambda
+      - Arn
+

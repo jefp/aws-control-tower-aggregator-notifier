@@ -92,12 +92,12 @@ Resources:
               StringEquals:
                 aws:PrincipalOrgID: !Ref OrganizationId
 Outputs:  
-  LambdaBucket:    
-    Description: The Id of the bucket    
+  MASTER_BUCKET:    
+    Description: The Name of the bucket (MASTER_BUCKET) 
     Value: 
       Ref: LambdaBucket
-  RoleARN:    
-    Description: The ARN of the Master Role
+  MASTER_ROLE:    
+    Description: The ARN of the Master Role (MASTER_ROLE)
     Value: 
       Fn::GetAtt:
       - MasterRole
