@@ -63,7 +63,7 @@ def get_tags(account_id):
     account_tags = get_all_tags(organization_client, account_id)
     result = {} 
     for tag in account_tags:
-        result[tag['Key']]=result[tag['Value']]
+        result[tag['Key']]=tag['Value']
     return result
 
 def send_email(rule_config,account_tags,details):
