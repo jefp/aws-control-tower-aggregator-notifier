@@ -9,6 +9,28 @@ Copy the values of the CF output:
 * MASTER_BUCKET
 * MASTER_ROLE
 
+If using Customizations for AWS Control Tower:
+
+Deploy the account-tags-config-rule.template into the template folder of the "Customizations for AWS Control Tower" solution 
+Deploy theaccount-tags-config-rule.json into the parameters folder of the "Customizations for AWS Control Tower" solution 
+
+Modify the parametrs SourceBucket, RequiredTags and AdminRoleToAssume in the file account-tags-config-rule.json
+
+Deploy in the OUs: 
+
+Example
+
+```yaml
+  - name: ConfigRuleAccountTags
+    template_file: templates/account-tags-config-rule.template
+    parameter_file: parameters/account-tags-config-rule.json
+    deploy_method: stack_set
+    deploy_to_ou: # :type: list
+      - Custom
+    regions:
+      - us-east-1
+```
+
 
 **In the audit account**
 
