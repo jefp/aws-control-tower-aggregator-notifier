@@ -11,7 +11,7 @@ cd aws-controltower-config-aggregator-notifier
 ```
 2. Run ```src/package.sh``` to package the code and dependencies
 
-3.Gather other information for deployment parameters:
+3. Gather other information for deployment parameters:
     In AWS Organizations, look on the Settings page for the Organization ID. It will be o-xxxxxxxxxx
     In AWS Organizations, look on the Accounts page for the Master Account ID and the Audit Account ID
 
