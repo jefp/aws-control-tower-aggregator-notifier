@@ -46,7 +46,9 @@ Resources:
               StringEquals:
                 aws:PrincipalOrgID: !Ref OrganizationId
               StringLike:
-                aws:PrincipalArn: arn:aws:iam::*:role/CustomControlTower-AccountTagsLambdaReaderRole
+                aws:PrincipalArn: 
+                  - arn:aws:iam::*:role/CustomControlTower-AccountTagsLambdaReaderRole
+                  - arn:aws:iam::*:role/CustomControlTower-AccountTagsLambdaNotifierRole
   LambdaBucket:
     Type: AWS::S3::Bucket
     Properties:

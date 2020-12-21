@@ -46,6 +46,7 @@ Parameters:
     Type: String
     MinLength: '1'
     MaxLength: '255'
+    Default: "AWS_CONFIG"
   SourceBucket:
     Description: Name of the S3 bucket that you have stored the lambda zip files in.
     Type: String
@@ -56,6 +57,7 @@ Parameters:
     Type: String
     MinLength: '1'
     MaxLength: '255'
+    Default: 'notify.zip'
   Description:
     Description: Description of the Rule
     Type: String
@@ -112,6 +114,7 @@ Resources:
   LambdaRole:
     Type: AWS::IAM::Role
     Properties:
+      RoleName: CustomControlTower-AccountTagsLambdaNotifierRole
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -140,6 +143,13 @@ Resources:
                 - ses:Send*
               Resource:
                 -  "*"
+            - Effect: Allow
+              Action:
+                - sts:AssumeRole
+              Resource:
+                - Ref: MasterRoleARN
+
+                
   LambdaRoleInit:
     Type: AWS::IAM::Role
     Properties:
