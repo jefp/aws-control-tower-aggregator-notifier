@@ -1,24 +1,35 @@
-# aws-controltower-config-aggregator-notifier
-**In the Master account**
+# AWS ControlTower Config Aggregator notifier
+The AWS ControlTower Configuration Aggregator Notifier is a solution that allows AWS account administrators that are implemented with [AWS Control Tower](https://aws.amazon.com/controltower/) and relies on the [Customizations for AWS Control Tower Solution] (https://aws.amazon.com/solutions/implementations/customizations-for-aws-control-tower/) to implement an automatednotifications to the AWS Account responsibles about compliance change in your AWS resources.
 
 
-Create the Cloudformation in the master account using this link: [master-role](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/create/template?templateURL=https://raw.githubusercontent.com/jefp/aws-controltower-config-aggregator-notifier/main/role-master.yml&stackName=ControlTowerCustomizationsConfigNotificationMaster)
+## Instructions
 
-Copy the values of the CF output:
+1. Clone the github repo and change the directory: 
+```bash
+git clone https://github.com/jefp/aws-controltower-config-aggregator-notifier.git
+cd aws-controltower-config-aggregator-notifier
+```
+2. Run ```src/package.sh``` to package the code and dependencies
+
+##   **In the Master Account** 
+
+1. Click the following button to launch the CloudFormation Stack in that region.
+
+    [![Launch Stack](launch-stack.svg)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/create/template?templateURL=https://raw.githubusercontent.com/jefp/aws-controltower-config-aggregator-notifier/main/role-master.yml&stackName=ControlTowerCustomizationsConfigNotificationMaster)
+
+Copy the values of the CloudFormation Output:
 
 * MASTER_BUCKET
 * MASTER_ROLE
 
-If using Customizations for AWS Control Tower:
+2. Upload the lambda files to the MASTER_BUCKET created in the previous step:
+```bash
+aws s3 cp src/account_tags.zip s3://MASTER_BUCKET/
+aws s3 cp src/notify.zip s3://MASTER_BUCKET/
+```
+3. Update the manifest.yaml file of the custom-control-tower-configuration include the config rule to audit the Account Tagging:
 
-Deploy the account-tags-config-rule.template into the template folder of the "Customizations for AWS Control Tower" solution 
-Deploy theaccount-tags-config-rule.json into the parameters folder of the "Customizations for AWS Control Tower" solution 
-
-Modify the parametrs SourceBucket, RequiredTags and AdminRoleToAssume in the file account-tags-config-rule.json
-
-Deploy in the OUs: 
-
-Example
+Example:
 
 ```yaml
   - name: ConfigRuleAccountTags
@@ -31,22 +42,40 @@ Example
       - us-east-1
 ```
 
+4. Copy the file: **ct-customizations/account-tags-config-rule.template** into the **custom-control-tower-configuration/template/** folder 
+5. Copy the file: **ct-customizations/account-tags-config-rule.json** into the **custom-control-tower-configuration/parameters/** folder 
 
-**In the audit account**
+Update the parameters **SourceBucket**, **RequiredTags** and **AdminRoleToAssume** in custom-control-tower-configuration/parameters/account-tags-config-rule.json
+using the **MASTER_BUCKET** and **MASTER_ROLE** 
 
-Create SES template in audit account
+The **RequiredTags** parameter contains the list of the mandatory tags for the AWS Accounts. 
 
+##   **In the Audit Account** 
+
+1. Create SES template in audit account
 ```bash
  aws ses create-template --cli-input-json file://template.json
 ```
+2. Click the following button to launch the CloudFormation Stack.
+    [![Launch Stack](launch-stack.svg)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/create/template?templateURL=https://raw.githubusercontent.com/jefp/aws-controltower-config-aggregator-notifier/main/audit_cf.yml&stackName=ControlTowerCustomizationsConfigNotificationAudit)
+    
+Copy the values of the CloudFormation Output:
 
-zip the function and upload to s3 bucket.
+* NOTIFY_LAMBDA_ARN
+* CONFIG_TABLE
 
+3. Subscribe the NOTIFY_LAMBDA function CustomControlTower-Config-Notification-function to topic **aws-controltower-AggregateSecurityNotifications**
 ```bash
-cd functions 
-zip notify.zip notify.py
-aws s3 cp notify.zip s3://$MASTER_BUCKET/
+aws sns subscribe \
+  --topic-arn arn:aws:sns:REGION:AUDIT_ACCOUNT_ID:aws-controltower-AggregateSecurityNotifications \
+  --protocol lambda \
+  --notification-endpoint NOTIFY_LAMBDA_ARN
 ```
-Create the Cloudformation in the audit account using this link: [audit-cf](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/create/template?templateURL=https://raw.githubusercontent.com/jefp/aws-controltower-config-aggregator-notifier/main/audit_cf.yml&stackName=ControlTowerCustomizationsConfigNotificationAudit)
+4. Update the configurations table in the **CONFIG_TABLE**
 
-Subscribe the lambda function CustomControlTower-Config-Notification-function to topic 	aws-controltower-AggregateSecurityNotifications
+
+
+## License
+
+This project is licensed under the Apache-2.0 License.
+
