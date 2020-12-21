@@ -1,0 +1,105 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >
+  Create a role that will be allowed to assume by a different account to read the tags of an account
+Parameters:
+  OrganizationId:
+    Type: String
+    Description: The id of the organization to limit the Role
+  MasterAccountId:
+    Type: String
+    Description: AWS Account Id of the identity/federation account.
+    MaxLength: 12
+    MinLength: 12
+Resources:
+  MasterRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: CustomControlTower-AccountTagsReaderRole
+      Policies:
+        -
+          PolicyName: CustomControlTower-AccountTagsReaderPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action: organizations:ListTagsForResource
+                Resource:
+                  !Join
+                    - ''
+                    - - 'arn:aws:organizations::' 
+                      - !Ref MasterAccountId
+                      - ':account/'
+                      - !Ref OrganizationId
+                      - '/*'
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              AWS:
+                - '*'
+            Action:
+              - sts:AssumeRole
+            Condition:
+              StringEquals:
+                aws:PrincipalOrgID: !Ref OrganizationId
+              StringLike:
+                aws:PrincipalArn: arn:aws:iam::*:role/CustomControlTower-AccountTagsLambdaReaderRole
+  LambdaBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Join
+        - "-"
+        - - "customcontroltower-lambda-accounts-tags"
+          - !Select
+            - 0
+            - !Split
+              - "-"
+              - !Select
+                - 2
+                - !Split
+                  - "/"
+                  - !Ref "AWS::StackId"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption: 
+        ServerSideEncryptionConfiguration: 
+        - ServerSideEncryptionByDefault:
+            SSEAlgorithm: AES256
+  LambdaBucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      Bucket:
+        Ref: LambdaBucket
+      PolicyDocument:
+        Statement:
+          - Action:
+              - 's3:GetObject'
+            Effect: Allow
+            Resource:
+              'Fn::Join':
+                - ''
+                - - 'arn:aws:s3:::'
+                  - Ref: LambdaBucket
+                  - /*
+            Principal: '*'
+            Condition:
+              StringEquals:
+                aws:PrincipalOrgID: !Ref OrganizationId
+Outputs:  
+  LambdaBucket:    
+    Description: The Id of the bucket    
+    Value: 
+      Ref: LambdaBucket
+  RoleARN:    
+    Description: The ARN of the Master Role
+    Value: 
+      Fn::GetAtt:
+      - MasterRole
+      - Arn
+

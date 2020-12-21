@@ -1,0 +1,215 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AWS CloudFormation template to create custom AWS Config rules. You will
+  be billed for the AWS resources used if you create a stack from this template.
+Parameters:
+  RuleName:
+    Description: Name of the Rule
+    Type: String
+    Default: CustomControlTower-Account-Tagging-Rule
+    MinLength: '1'
+    MaxLength: '255'
+  Description:
+    Description: Description of the Rule
+    Type: String
+    MinLength: '1'
+    MaxLength: '255'
+    Default: Analyze if account has the required tags.
+  SourceBucket:
+    Description: Name of the S3 bucket that you have stored the rule zip files in.
+    Type: String
+    MinLength: '1'
+    MaxLength: '255'
+  SourcePath:
+    Description: Key in the S3 bucket where you have stored the rule zip files.
+    Type: String
+    MinLength: '1'
+    MaxLength: '255'
+  SourceEvents:
+    Description: Event Type
+    Type: CommaDelimitedList
+    Default: NONE
+  SourceRuntime:
+    Description: Runtime Language
+    Type: String
+    MinLength: '1'
+    MaxLength: '255'
+    Default: python3.8
+  SourcePeriodic:
+    Description: Execution Frequency
+    Type: String
+    MinLength: '1'
+    MaxLength: '255'
+    Default: TwentyFour_Hours
+  RequiredTags:
+    Description: Required Tags for the Accounts delimited by commas
+    Type: String
+    Default: Owner,Financial-Owner,Operation-Owner
+  AdminRoleToAssume:
+    Description: Admin Role to assume
+    Type: String
+    MinLength: '1'
+    MaxLength: '255'
+    Default: 'arn'
+  Timeout:
+    Description: Lambda Function timeout
+    Type: String
+    Default: 60
+Conditions:
+  EventTriggered:
+    Fn::Not:
+    - Fn::Equals:
+      - Fn::Join:
+        - ","
+        - Ref: SourceEvents
+      - NONE
+  PeriodicTriggered:
+    Fn::Not:
+    - Fn::Equals:
+      - Ref: SourcePeriodic
+      - NONE
+Resources:
+  rdkRuleCodeLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName:
+        Fn::Join:
+        - ''
+        - - Ref: RuleName
+          - '-function'
+      Code:
+        S3Bucket:
+          Ref: SourceBucket
+        S3Key:
+          Ref: SourcePath
+      Description: 
+        Fn::Join:
+        - ''
+        - - 'Lambda supporting the Rule for ' 
+          - Ref: Description
+      Handler: account_tags.lambda_handler
+      MemorySize: '256'
+      Role:
+        Fn::GetAtt:
+        - rdkLambdaRole
+        - Arn
+      Runtime:
+        Ref: SourceRuntime
+      Timeout:
+        Ref: Timeout
+  ConfigPermissionToCallrdkRuleCodeLambda:
+    Type: AWS::Lambda::Permission
+    DependsOn: rdkRuleCodeLambda
+    Properties:
+      FunctionName:
+        Fn::GetAtt:
+        - rdkRuleCodeLambda
+        - Arn
+      Action: lambda:InvokeFunction
+      Principal: config.amazonaws.com
+  rdkConfigRule:
+    Type: AWS::Config::ConfigRule
+    DependsOn:
+    - ConfigPermissionToCallrdkRuleCodeLambda
+    Properties:
+      ConfigRuleName:
+        Ref: RuleName
+      Description:
+        Ref: Description
+      Scope:
+        Fn::If:
+        - EventTriggered
+        - ComplianceResourceTypes:
+            Ref: SourceEvents
+        - Ref: AWS::NoValue
+      Source:
+        Owner: CUSTOM_LAMBDA
+        SourceIdentifier:
+          Fn::GetAtt:
+          - rdkRuleCodeLambda
+          - Arn
+        SourceDetails:
+        - Fn::If:
+          - EventTriggered
+          - EventSource: aws.config
+            MessageType: ConfigurationItemChangeNotification
+          - Ref: AWS::NoValue
+        - Fn::If:
+          - PeriodicTriggered
+          - EventSource: aws.config
+            MessageType: ScheduledNotification
+            MaximumExecutionFrequency:
+              Ref: SourcePeriodic
+          - Ref: AWS::NoValue
+      InputParameters:
+        Fn::Join:
+        - ''
+        - - '{'
+          - '"RequiredTagsList":"'
+          - Ref: RequiredTags
+          - '","RoleMasterAssume":"'
+          - Ref: AdminRoleToAssume
+          - '"}'
+  rdkLambdaRole:
+    Type: AWS::IAM::Role
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: F3
+          - id: W11
+          - id: W28
+    Properties:
+      RoleName: CustomControlTower-AccountTagsLambdaReaderRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: AllowLambdaAssumeRole
+          Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+          Action: sts:AssumeRole
+      Policies:
+      - PolicyName: ConfigRulePolicy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Sid: '1'
+            Action:
+            - s3:GetObject
+            Effect: Allow
+            Resource:
+              Fn::Sub: arn:${AWS::Partition}:s3:::${SourceBucket}/${SourcePath}
+          - Sid: '2'
+            Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            - logs:DescribeLogStreams
+            Effect: Allow
+            Resource: "*"
+          - Sid: '3'
+            Action:
+            - config:PutEvaluations
+            Effect: Allow
+            Resource: "*"
+          - Sid: '4'
+            Action:
+            - iam:List*
+            - iam:Describe*
+            - iam:Get*
+            Effect: Allow
+            Resource: "*"
+          - Sid: '5'
+            Action:
+            - sts:AssumeRole
+            Effect: Allow
+            Resource: "*"
+      ManagedPolicyArns:
+      - Fn::Sub: arn:${AWS::Partition}:iam::aws:policy/ReadOnlyAccess
+Outputs:
+  RuleCodeLambda:
+    Description: ARN for the Rule Code lambda
+    Value:
+      Fn::GetAtt:
+      - rdkRuleCodeLambda
+      - Arn

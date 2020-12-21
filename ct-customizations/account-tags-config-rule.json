@@ -1,0 +1,44 @@
+[
+  {
+    "ParameterKey": "AdminRoleToAssume",
+    "ParameterValue": "XX"
+  },  
+  {
+    "ParameterKey": "Description",
+    "ParameterValue": "Analyze if account has the required tags."
+  },
+  {
+    "ParameterKey": "RequiredTags",
+    "ParameterValue": "PrimaryOwner,GroupOwner,EscalationContact1,EscalationContact2,OperationOwner,SecurityOwner"
+  },
+  {
+    "ParameterKey": "RuleName",
+    "ParameterValue": "CustomControlTower-Account-Tagging-Rule"
+  },
+  {
+    "ParameterKey": "SourceBucket",
+    "ParameterValue": "XX"
+  },
+  {
+    "ParameterKey": "SourceEvents",
+    "ParameterValue": "NONE"
+  }, 
+  {
+    "ParameterKey": "SourcePath",
+    "ParameterValue": "account_tags.zip"
+  },
+  {
+    "ParameterKey": "SourcePeriodic",
+    "ParameterValue": "TwentyFour_Hours"
+  },
+  {
+    "ParameterKey": "SourceRuntime",
+    "ParameterValue": "python3.8"
+  },
+  {
+    "ParameterKey": "Timeout",
+    "ParameterValue": "60"
+  }
+]
+
+

@@ -4,7 +4,11 @@ import os
 from contextlib import closing
 from tempfile import gettempdir
 import datetime as dt
+
+
+
 from dateutil.tz import gettz
+
 from boto3.dynamodb.conditions import Key, Attr
 
 import botocore
@@ -27,6 +31,7 @@ def get_assume_role_credentials(role_arn):
 
 def get_client(service, role_arn, assume_role):
     """Return the service boto client. It should be used instead of directly calling the client.
+
 
     Keyword arguments:
     service -- the service name used for calling the boto.client()
@@ -62,8 +67,6 @@ def get_tags(account_id):
     return result
 
 def send_email(rule_config,account_tags,details):
-   
-
     if ( rule_config['notification_enabled' ] == False):
         return
     mail_config = rule_config
@@ -75,19 +78,54 @@ def send_email(rule_config,account_tags,details):
             mail_config[config] = account_tags[config]
 
     for config in lst: 
-        if rule_config[config] is not None:
-            primary_owner = rule_config[config]
+        if rule_config[config] is not None or rule_config[config] != "None" :
+            mail_config[config] = rule_config[config]
 
+    title = "Evaluación de política de compliance sobre recurso de AWS"
+    preheader = "{} - {}".format(details['resourceId'],details['newEvaluationResult']['complianceType'])
 
+    bg_color = "#990000"
+    if ('newEvaluationResult' in details and \
+        'complianceType' in details['newEvaluationResult'] and \
+        details['newEvaluationResult']['complianceType'] == "COMPLIANT"):
+        bg_color = "#007f00"
+        
     ses_client = get_client('ses', None,False)
-    template_data = '"GREETINGS":"{}", "AWS_ACCONT":"{}","MESSAGE_BODY":"{}","URL":"{}"'.format(
-        "Hola",
-        details['awsAccountId'],
-        details['configRuleName'],
-        "entel.cl"
-    )
+    template_data = '"awsAccountId":"{}",\
+                    "awsRegion":"{}",\
+                    "resourceType":"{}",\
+                    "resourceId":"{}",\
+                    "configRuleName":"{}",\
+                    "complianceType":"{}",\
+                    "configRuleInvokedTime":"{}",\
+                    "resultRecordedTime":"{}",\
+                    "notificationCreationTime":"{}",\
+                    "MORE_INFO": "{}",\
+                    "COMPANY": "{}",\
+                    "SRC_LOGO": "{}",\
+                    "PREHEADER": "{}",\
+                    "TITLE": "{}",\
+                    "BG_COLOR": "{}"'.format(
+                    details['awsAccountId'],
+                    details['awsRegion'],
+                    details['resourceType'],
+                    details['resourceId'],
+                    details['configRuleName'],
+                    details['newEvaluationResult']['complianceType'],
+                    details['newEvaluationResult']['configRuleInvokedTime'],
+                    details['newEvaluationResult']['resultRecordedTime'],
+                    details['notificationCreationTime'],
+                    os.environ['MORE_INFO'],
+                    os.environ['COMPANY'],
+                    os.environ['SRC_LOGO'],
+                    preheader,
+                    title,
+                    bg_color
+                    )
+
+
     response = ses_client.send_templated_email(
-        Source=os.environ['EMAIL_SENDER'],
+        Source=os.environ['SES_EMAIL_SENDER'],
         Destination={
             'ToAddresses': [
             mail_config['primary_owner'],
@@ -97,21 +135,22 @@ def send_email(rule_config,account_tags,details):
             ]
     },
     ReplyToAddresses=[
-        os.environ['EMAIL_SENDER'],
+        os.environ['SES_EMAIL_REPLY_TO'],
     ],
-    Template=os.environ['TEMPLATE_NAME'],
-    TemplateData='{'+template_data+'}'
+    Template=os.environ['SES_TEMPLATE_NAME'],
+    TemplateData='{'+template_data+'}',
+    ConfigurationSetName=os.environ['SES_CONFIGURATION_SET']
     )
+    return response
 
 def get_config(rule):
     table = dynamodb.Table(os.environ['DYNAMODB_TABLE'])
     dresponse = table.query(
        KeyConditionExpression=Key('id').eq('default_config')
     )
-    config = {'notification_enabled': False, 
+    config = {  'notification_enabled': False, 
                 'escalation_enabled': False, 
                 'escalate_after': 24, 
-                'override_notification': True, 
                 'escalate_contact1': None, 
                 'escalate_contact2': None,
                 'primary_owner': None,
@@ -119,9 +158,9 @@ def get_config(rule):
     if (len(dresponse['Items']) == 1):
         for k in dresponse['Items'][0]:
             config[k]=dresponse['Items'][0][k]
+
     #get key id for current rule
     rule_response = table.scan()
-    config_keys = []
     for rule_id in rule_response['Items']:
         if rule.startswith( rule_id['id'] ):
             for k in rule_id:
@@ -130,47 +169,11 @@ def get_config(rule):
     return config
     
 
-'''
-{
-    "version": "0",
-    "id": "51677f1d-1ae8-5357-cc9b-387ac98e26ab",
-    "detail-type": "Config Rules Compliance Change",
-    "source": "aws.config",
-    "account": "616241992003",
-    "time": "2020-12-17T05:13:50Z",
-    "region": "eu-west-2",
-    "resources": [],
-    "detail": {
-        "resourceId": "AROAY66XCSFB4WL7AHL3V",
-        "awsRegion": "eu-west-2",
-        "awsAccountId": "616241992003",
-        "configRuleName": "securityhub-iam-inline-policy-blocked-kms-actions-baa2cf8c",
-        "recordVersion": "1.0",
-        "configRuleARN": "arn:aws:config:eu-west-2:616241992003:config-rule/aws-service-rule/securityhub.amazonaws.com/config-rule-lcprsx",
-        "messageType": "ComplianceChangeNotification",
-        "newEvaluationResult": {
-            "evaluationResultIdentifier": {
-                "evaluationResultQualifier": {
-                    "configRuleName": "securityhub-iam-inline-policy-blocked-kms-actions-baa2cf8c",
-                    "resourceType": "AWS::IAM::Role",
-                    "resourceId": "AROAY66XCSFB4WL7AHL3V"
-                },
-                "orderingTimestamp": "2020-12-16T18:46:38.764Z"
-            },
-            "complianceType": "COMPLIANT",
-            "resultRecordedTime": "2020-12-17T05:13:49.210Z",
-            "configRuleInvokedTime": "2020-12-17T05:13:48.933Z"
-        },
-        "notificationCreationTime": "2020-12-17T05:13:50.188Z",
-        "resourceType": "AWS::IAM::Role"
-    }
-}
-'''
 
-def handler(event, context):
+
+def lambda_handler(event, context):
     for i in range(len(event['Records'])):
         message = event['Records'][i]['Sns']['Message']
-        messageID = event['Records'][i]['Sns']['MessageId']
         messageJ = json.loads(message)
         details = messageJ['detail']
         rule_config = get_config(details['configRuleName'])
