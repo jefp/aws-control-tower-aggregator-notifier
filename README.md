@@ -13,6 +13,9 @@ cd aws-controltower-config-aggregator-notifier
 
 ##   **In the Master Account** 
 
+1.Gather other information for deployment parameters:
+    In AWS Organizations, look on the Settings page for the Organization ID. It will be o-xxxxxxxxxx
+    In AWS Organizations, look on the Accounts page for the Master account ID.
 1. Click the following button to launch the CloudFormation Stack in that region.
 
     [![Launch Stack](launch-stack.svg)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/create/template?templateURL=https://raw.githubusercontent.com/jefp/aws-controltower-config-aggregator-notifier/main/role-master.yml&stackName=ControlTowerCustomizationsConfigNotificationMaster)
