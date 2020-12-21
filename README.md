@@ -17,9 +17,9 @@ cd aws-controltower-config-aggregator-notifier
 
 ##   **In the Master Account** 
 
-1. Click the following button to launch the CloudFormation Stack in that region.
+1. Launch the CloudFormation Stack in the region where you have deployed the the [Customizations for AWS Control Tower Solution] (https://aws.amazon.com/solutions/implementations/customizations-for-aws-control-tower/) using the template role-master.yml
 
-    [![Launch Stack](launch-stack.svg)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/create/template?templateURL=https://raw.githubusercontent.com/jefp/aws-controltower-config-aggregator-notifier/main/role-master.yml&stackName=ControlTowerCustomizationsConfigNotificationMaster)
+*You can name the CF as: ControlTowerCustomizationsConfigNotificationMaster*
 
 Copy the values of the CloudFormation Output:
 
@@ -60,9 +60,11 @@ The **RequiredTags** parameter contains the list of the mandatory tags for the A
 ```bash
  aws ses create-template --cli-input-json file://template.json
 ```
-2. Click the following button to launch the CloudFormation Stack.
-    [![Launch Stack](launch-stack.svg)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/create/template?templateURL=https://raw.githubusercontent.com/jefp/aws-controltower-config-aggregator-notifier/main/audit_cf.yml&stackName=ControlTowerCustomizationsConfigNotificationAudit)
-    
+
+2. Launch the CloudFormation Stack in the region where you want to have the centralized config notification using the template audit_cf.yml
+
+*You can name the CF as: ControlTowerCustomizationsConfigNotificationAudit*
+
 Copy the values of the CloudFormation Output:
 
 * NOTIFY_LAMBDA_ARN
