@@ -57,7 +57,7 @@ Parameters:
     Type: String
     MinLength: '1'
     MaxLength: '255'
-    Default: 'notify.zip'
+    Default: 'notify_config.zip'
   Description:
     Description: Description of the Rule
     Type: String
@@ -83,7 +83,7 @@ Resources:
         - ''
         - - 'Lambda supporting the Rule for ' 
           - Ref: Description
-      Handler: notify.lambda_handler
+      Handler: notify_config.lambda_handler
       MemorySize: '256'
       Role:
         Fn::GetAtt:
@@ -180,6 +180,7 @@ Resources:
           const AWS = require("aws-sdk");
           const response = require("cfn-response");
           const docClient = new AWS.DynamoDB.DocumentClient();
+          const docClient2 = new AWS.DynamoDB.DocumentClient();
           exports.handler = function(event, context) {
               console.log(JSON.stringify(event,null,2));
               var params = {
@@ -188,17 +189,30 @@ Resources:
                     "id": "default_config",
                     "primary_owner": "None",
                     "notification_enabled": false,
-                    "escalation_enabled": false,
-                    "escalate_after": 24,
                     "group_owner": "None",
-                    "escalate_contact1": "None",
-                    "escalate_contact2": "None"
+                    "security_owner": "None"
                 }
-            };
+              };
+              var params2 = {
+                TableName: event.ResourceProperties.DynamoTableName,
+                Item:{
+                    "id": "default_guardduty",
+                    "primary_owner": "None",
+                    "notification_enabled": false,
+                    "group_owner": "None",
+                    "min_severity": 4.0,
+                    "security_owner": "None"
+                }
+              };
           docClient.put(params, function(err, data) { if (err) {
             response.send(event, context, "FAILED", {});
           } else {
-            response.send(event, context, "SUCCESS", {});
+              docClient2.put(params2, function(err2, d) { if (err2) {
+                response.send(event, context, "FAILED", {});
+              } else { 
+              response.send(event, context, "SUCCESS", {});
+              }
+            });
           }
           });
           };

@@ -29,7 +29,8 @@ Copy the values of the CloudFormation Output:
 2. Upload the lambda files to the MASTER_BUCKET created in the previous step:
 ```bash
 aws s3 cp src/account_tags.zip s3://MASTER_BUCKET/
-aws s3 cp src/notify.zip s3://MASTER_BUCKET/
+aws s3 cp src/notify_config.zip s3://MASTER_BUCKET/
+aws s3 cp src/notify_guardduty.zip s3://MASTER_BUCKET/
 ```
 3. Update the manifest.yaml file of the custom-control-tower-configuration include the config rule to audit the Account Tagging:
 
@@ -58,7 +59,8 @@ The **RequiredTags** parameter contains the list of the mandatory tags for the A
 
 1. Create SES template in audit account
 ```bash
- aws ses create-template --cli-input-json file://template.json
+ aws ses create-template --cli-input-json file://template_config.json
+ aws ses create-template --cli-input-json file://template_gd.json
 ```
 
 2. Launch the CloudFormation Stack in the region where you want to have the centralized config notification using the template audit_cf.yml

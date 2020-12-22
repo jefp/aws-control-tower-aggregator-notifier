@@ -76,7 +76,7 @@ def send_email(rule_config,account_tags,details):
         return
     mail_config = rule_config
 
-    lst = ['primary_owner', 'group_owner', 'escalate_contact1', 'escalate_contact2'] 
+    lst = ['primary_owner', 'group_owner', 'security_owner'] 
 
     for config in lst: 
         if config in account_tags:
@@ -165,13 +165,11 @@ def get_config(rule):
     dresponse = table.query(
        KeyConditionExpression=Key('id').eq('default_config')
     )
-    config = {  'notification_enabled': False, 
-                'escalation_enabled': False, 
-                'escalate_after': 24, 
-                'escalate_contact1': None, 
-                'escalate_contact2': None,
+    config = {  'notification_enabled': False,
                 'primary_owner': None,
-                'group_owner': None}
+                'group_owner': None,
+                'security_owner': None 
+                }
     if (len(dresponse['Items']) == 1):
         for k in dresponse['Items'][0]:
             config[k]=dresponse['Items'][0][k]
