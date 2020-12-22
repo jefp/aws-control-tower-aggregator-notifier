@@ -28,9 +28,9 @@ Copy the values of the CloudFormation Output:
 
 2. Upload the lambda files to the MASTER_BUCKET created in the previous step:
 ```bash
-aws s3 cp src/account_tags.zip s3://MASTER_BUCKET/
-aws s3 cp src/notify_config.zip s3://MASTER_BUCKET/
-aws s3 cp src/notify_guardduty.zip s3://MASTER_BUCKET/
+aws s3 cp src/account_tags.zip s3://$MASTER_BUCKET/
+aws s3 cp src/notify_config.zip s3://$MASTER_BUCKET/
+aws s3 cp src/notify_guardduty.zip s3://$MASTER_BUCKET/
 ```
 3. Update the manifest.yaml file of the custom-control-tower-configuration include the config rule to audit the Account Tagging:
 

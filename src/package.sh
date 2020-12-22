@@ -9,8 +9,8 @@ SCRIPT_DIRECTORY="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pw
  
 pushd $SCRIPT_DIRECTORY > /dev/null
  
-rm -rf .package account_tags.zip  notify_config.zip notify_guardutty.zip 
+rm -rf .package account_tags.zip  notify_config.zip notify_guardduty.zip 
 zip --grow  account_tags.zip account_tags.py
 zip --grow notify_config.zip notify_config.py
-zip --grow notify_guardutty.zip notify_guardutty.py
+zip --grow notify_guardduty.zip notify_guardduty.py
 popd > /dev/null
