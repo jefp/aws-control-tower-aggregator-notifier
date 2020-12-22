@@ -48,7 +48,8 @@ Resources:
               StringLike:
                 aws:PrincipalArn: 
                   - arn:aws:iam::*:role/CustomControlTower-AccountTagsLambdaReaderRole
-                  - arn:aws:iam::*:role/CustomControlTower-AccountTagsLambdaNotifierRole
+                  - arn:aws:iam::*:role/CustomControlTower-AccountTagsLambdaConfigNotifierRole
+                  - arn:aws:iam::*:role/CustomControlTower-AccountTagsLambdaGDNotifierRole
   LambdaBucket:
     Type: AWS::S3::Bucket
     Properties:
