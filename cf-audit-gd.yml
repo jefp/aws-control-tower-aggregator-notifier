@@ -1,0 +1,196 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: ''
+Parameters:
+  LambdaName:
+    Description: Name of the lambda
+    Type: String
+    Default: CustomControlTower-GuardDuty-Notification
+    MinLength: '1'
+    MaxLength: '255'
+  Company:
+    Description: Name of the company
+    Type: String
+    MinLength: '1'
+    MaxLength: '255'
+  SrcLogo:
+    Description: URL of the company logo
+    Type: String
+    MinLength: '1'
+    MaxLength: '255'
+  MasterRoleARN:
+    Description: ARN of the Admin Role to assume
+    Type: String
+    MinLength: '1'
+    MaxLength: '255'
+  SESConfigurationSet:
+    Description: Name of the SES configuration SET
+    Type: String
+    MinLength: '1'
+    MaxLength: '255'
+  SESEmailReplyTo:
+    Description: Email configured for reply-to
+    Type: String
+    MinLength: '1'
+    MaxLength: '255'
+  SESEmailSender:
+    Description: Email configured as sender
+    Type: String
+    MinLength: '1'
+    MaxLength: '255'
+  SESTemplateName:
+    Description: Name of the SES Template
+    Type: String
+    MinLength: '1'
+    MaxLength: '255'
+    Default: "AWS_GUARDDUTY"
+  SourceBucket:
+    Description: Name of the S3 bucket that you have stored the lambda zip files in.
+    Type: String
+    MinLength: '1'
+    MaxLength: '255'
+  SourcePath:
+    Description: Key in the S3 bucket where you have stored the rule zip files.
+    Type: String
+    MinLength: '1'
+    MaxLength: '255'
+    Default: 'notify_guardduty.zip'
+  Description:
+    Description: Description of the Rule
+    Type: String
+    MinLength: '1'
+    MaxLength: '255'
+    Default: Lambda to send email when guardduty finding is found.
+Resources:
+  EventRule:
+    Type: 'AWS::Events::Rule'
+    Properties:
+      Name: detect-guardduty-finding
+      Description: >-
+        A CloudWatch Event Rule that triggers on Amazon GuardDuty findings. The
+        Event Rule can be used to trigger notifications or remediative actions
+        using AWS Lambda.
+      State: ENABLED
+      Targets:
+        - Arn:
+            Ref: SnsTopic
+          Id: target-id1
+      EventPattern:
+        detail-type:
+          - GuardDuty Finding
+        source:
+          - aws.guardduty
+  SnsTopic:
+    Type: 'AWS::SNS::Topic'
+    Properties: 
+      TopicName: custom-controltower-AggregateGDNotifications
+  SnsTopicPolicy:
+    Type: 'AWS::SNS::TopicPolicy'
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Sid: __default_statement_ID
+            Effect: Allow
+            Principal:
+              AWS: '*'
+            Action:
+              - 'SNS:GetTopicAttributes'
+              - 'SNS:SetTopicAttributes'
+              - 'SNS:AddPermission'
+              - 'SNS:RemovePermission'
+              - 'SNS:DeleteTopic'
+              - 'SNS:Subscribe'
+              - 'SNS:ListSubscriptionsByTopic'
+              - 'SNS:Publish'
+              - 'SNS:Receive'
+            Resource:
+              Ref: SnsTopic
+            Condition:
+              StringEquals:
+                'AWS:SourceOwner':
+                  Ref: 'AWS::AccountId'
+          - Sid: TrustCWEToPublishEventsToMyTopic
+            Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: 'sns:Publish'
+            Resource:
+              Ref: SnsTopic
+      Topics:
+        - Ref: SnsTopic
+  notifierLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: 'CustomControlTower-GuardDuty-Notification-function'
+      Code:
+        S3Bucket:
+          Ref: SourceBucket
+        S3Key:
+          Ref: SourcePath
+      Description: 
+        Fn::Join:
+        - ''
+        - - 'Lambda supporting the Rule for ' 
+          - Ref: Description
+      Handler: notify_guardduty.lambda_handler
+      MemorySize: '256'
+      Role:
+        Fn::GetAtt:
+        - LambdaRole
+        - Arn
+      Runtime: 'python3.8'
+      Timeout: 120
+      Environment:
+        Variables:
+          COMPANY:
+            Ref: Company
+          DYNAMODB_TABLE: 
+            Ref: ConfigTableDynamoDB
+          MASTER_ROLE_ARN:
+            Ref: MasterRoleARN
+          SES_CONFIGURATION_SET:
+            Ref: SESConfigurationSet
+          SES_EMAIL_REPLY_TO:
+            Ref: SESEmailReplyTo
+          SES_EMAIL_SENDER:
+            Ref: SESEmailSender
+          SES_TEMPLATE_NAME:
+            Ref: SESTemplateName
+          SRC_LOGO: 
+           Ref: SrcLogo
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: CustomControlTower-AccountTagsLambdaGDNotifierRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+           - Effect: Allow
+             Principal:
+                Service: lambda.amazonaws.com
+             Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Path: "/"
+      Policies:
+        - PolicyName: DDBAccessRoleAndSes
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action: 
+                - dynamodb:DescribeTable
+                - dynamodb:Query
+                - dynamodb:Scan
+                - dynamodb:GetItem
+              Resource: 
+                - "Fn::GetAtt": [ ConfigTableDynamoDB, Arn ]
+            - Effect: Allow
+              Action:
+                - ses:Send*
+              Resource:
+                -  "*"
+            - Effect: Allow
+              Action:
+                - sts:AssumeRole
+              Resource:
+                - Ref: MasterRoleARN
