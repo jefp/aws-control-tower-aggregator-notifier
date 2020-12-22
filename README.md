@@ -83,11 +83,11 @@ aws sns subscribe \
 
 # Give permissions to Lambda to access that subscription i.e. Add it through triggers
 aws lambda add-permission \
-    --function-name HourlyLambdaFunction \
-    --statement-id AUDIT_ACCOUNT_ID\
+    --function-name CustomControlTower-Config-Notification-function \
+    --statement-id config-notification-function-sns-source\
     --action "lambda:InvokeFunction" \
     --principal sns.amazonaws.com \
-    --source-arn NOTIFY_LAMBDA_ARN
+    --source-arn arn:aws:sns:REGION:AUDIT_ACCOUNT_ID:aws-controltower-AggregateSecurityNotifications
     
 ```
 4. Update the configurations table in the **CONFIG_TABLE**
