@@ -17,7 +17,7 @@ cd aws-control-tower-config-aggregator-notifier
 
 ##   **In the Master Account** 
 
-1. Launch the CloudFormation Stack in the region where you have deployed the the [Customizations for AWS Control Tower Solution] (https://aws.amazon.com/solutions/implementations/customizations-for-aws-control-tower/) using the template role-master.yml
+1. Launch the CloudFormation Stack in the region where you have deployed the [Customizations for AWS Control Tower Solution](https://aws.amazon.com/solutions/implementations/customizations-for-aws-control-tower/) using the template cf-master.yml
 
 *You can name the CF as: ControlTowerCustomizationsConfigNotificationMaster*
 
@@ -63,7 +63,7 @@ The **RequiredTags** parameter contains the list of the mandatory tags for the A
  aws ses create-template --cli-input-json file://template_gd.json
 ```
 
-2. Launch the CloudFormation Stack in the region where you want to have the centralized config notification using the template audit_cf.yml
+2. Launch the CloudFormation Stack in the region where you want to have the centralized config notification using the template cf-audit.yml
 
 *You can name the CF as: ControlTowerCustomizationsConfigNotificationAudit*
 
