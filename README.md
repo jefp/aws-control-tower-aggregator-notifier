@@ -74,10 +74,6 @@ Copy the values of the CloudFormation Output:
 
 3. Subscribe the NOTIFY_LAMBDA function CustomControlTower-Config-Notification-function to topic **aws-controltower-AggregateSecurityNotifications**
 ```bash
-aws sns subscribe \
-  --topic-arn arn:aws:sns:REGION:AUDIT_ACCOUNT_ID:aws-controltower-AggregateSecurityNotifications \
-  --protocol lambda \
-  --notification-endpoint NOTIFY_LAMBDA_ARN
   
 # Add Lambda to SNS as subscription
 aws sns subscribe \
