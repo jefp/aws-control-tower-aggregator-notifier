@@ -186,22 +186,24 @@ Resources:
               var params = {
                 TableName: event.ResourceProperties.DynamoTableName,
                 Item:{
-                    "id": "default_config",
-                    "primary_owner": "None",
-                    "notification_enabled": false,
-                    "group_owner": "None",
-                    "security_owner": "None"
+                    "id": "DefaultConfig",
+                    "PrimaryOwner": "None",
+                    "NotificationEnabled": false,
+                    "GroupOwner": "None",
+                    "SecurityOwner": "None",
+                    "OperationOwner": "None"
                 }
               };
               var params2 = {
                 TableName: event.ResourceProperties.DynamoTableName,
                 Item:{
-                    "id": "default_guardduty",
-                    "primary_owner": "None",
-                    "notification_enabled": false,
-                    "group_owner": "None",
-                    "min_severity": 4.0,
-                    "security_owner": "None"
+                    "id": "DefaultGuardduty",
+                    "PrimaryOwner": "None",
+                    "NotificationEnabled": false,
+                    "GroupOwner": "None",
+                    "MinSeverity": 4.0,
+                    "SecurityOwner": "None",
+                    "OperationOwner": "None"
                 }
               };
           docClient.put(params, function(err, data) { if (err) {

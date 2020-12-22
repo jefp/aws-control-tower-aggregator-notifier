@@ -9,7 +9,7 @@
   },
   {
     "ParameterKey": "RequiredTags",
-    "ParameterValue": "PrimaryOwner,GroupOwner,EscalationContact1,EscalationContact2,OperationOwner,SecurityOwner"
+    "ParameterValue": "PrimaryOwner,GroupOwner,OperationOwner,SecurityOwner,FinancialOwner"
   },
   {
     "ParameterKey": "RuleName",

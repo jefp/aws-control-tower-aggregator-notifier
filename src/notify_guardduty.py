@@ -71,12 +71,12 @@ def send_email(rule_config,account_tags,details):
     print(account_tags)
     print(details)
     
-    if ( rule_config['notification_enabled' ] == False):
+    if ( rule_config['NotificationEnabled' ] == False):
         print("Email not sent by configuration")
         return
     mail_config = rule_config
 
-    lst = ['primary_owner', 'group_owner', 'security_owner'] 
+    lst = ['PrimaryOwner', 'GroupOwner', 'SecurityOwner','OperationOwner'] 
 
     for config in lst: 
         if config in account_tags:
@@ -136,26 +136,26 @@ def send_email(rule_config,account_tags,details):
                     )
 
 
-    if re.match(r"[^@]+@[^@]+\.[^@]+", mail_config['primary_owner']):
-        print("Primary owner {} is valid".format(mail_config['primary_owner']))
+    if re.match(r"[^@]+@[^@]+\.[^@]+", mail_config['PrimaryOwner']):
+        print("Primary owner {} is valid".format(mail_config['PrimaryOwner']))
     else:
-        print("Email not sent. primary_owner is not valid")
+        print("Email not sent. PrimaryOwner is not valid")
         return
 
-    if re.match(r"[^@]+@[^@]+\.[^@]+", mail_config['group_owner']):
-        print("Group owner {} is valid".format(mail_config['group_owner']))
+    if re.match(r"[^@]+@[^@]+\.[^@]+", mail_config['GroupOwner']):
+        print("Group owner {} is valid".format(mail_config['GroupOwner']))
     else:
-        print("Email not sent. group_owner is not valid")
+        print("Email not sent. GroupOwner is not valid")
         return
 
     response = ses_client.send_templated_email(
         Source=os.environ['SES_EMAIL_SENDER'],
         Destination={
             'ToAddresses': [
-            mail_config['primary_owner'],
+            mail_config['PrimaryOwner'],
             ],
             'CcAddresses': [
-            mail_config['group_owner'],
+            mail_config['GroupOwner'],
             ]
     },
     ReplyToAddresses=[
@@ -172,11 +172,12 @@ def get_config(rule):
     dresponse = table.query(
        KeyConditionExpression=Key('id').eq('default_guardduty')
     )
-    config = {  'notification_enabled': False, 
-                'primary_owner': None,
-                'group_owner': None,
-                'security_owner': None,
-                'min_severity': 0.0
+    config = {  'NotificationEnabled': False, 
+                'PrimaryOwner': None,
+                'GroupOwner': None,
+                'SecurityOwner': None,
+                'MinSeverity': 0.0,
+                'OperationOwner': None
                 }
     if (len(dresponse['Items']) == 1):
         for k in dresponse['Items'][0]:
