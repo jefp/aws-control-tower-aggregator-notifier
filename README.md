@@ -6,8 +6,8 @@ The AWS ControlTower Configuration Aggregator Notifier is a solution that allows
 
 1. Clone the github repo and change the directory: 
 ```bash
-git clone https://github.com/jefp/aws-control-tower-config-aggregator-notifier.git
-cd aws-control-tower-config-aggregator-notifier
+git clone https://github.com/jefp/aws-control-tower-aggregator-notifier.git
+cd aws-control-tower-aggregator-notifier
 ```
 2. Run ```src/package.sh``` to package the code and dependencies
 
