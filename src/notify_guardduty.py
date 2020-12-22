@@ -76,6 +76,10 @@ def send_email(rule_config,account_tags,details):
         return
     mail_config = rule_config
 
+    if ( float(rule_config['MinSeverity' ]) > float(details['severity'])  ):
+        print("Email not sent. Severity {} is lower than MinSeverity configured: {}".format(details['severity'],rule_config['MinSeverity' ]))
+        return
+    
     lst = ['PrimaryOwner', 'GroupOwner', 'SecurityOwner','OperationOwner'] 
 
     for config in lst: 
@@ -99,15 +103,19 @@ def send_email(rule_config,account_tags,details):
     if details['resource']['resourceType'] == "Instance":
         resourceId=details['resource']['instanceDetails']['instanceId']
     elif details['resource']['resourceType'] == "S3Bucket":
-        resourceId=details['resource']['s3BucketDetails']['name']
-    more_info = "https://console.aws.amazon.com/guardduty/home?region=us-east-1#/findings?macros=all&search=id%3D{}".format(details['id'])
+        resourceId=details['resource']['s3BucketDetails'][0]['name']
+    elif details['resource']['resourceType'] == "AccessKey":
+        resourceId=details['resource']['accessKeyDetails']['accessKeyId']
+    
+    more_info = "<a href=\'https://console.aws.amazon.com/guardduty/home?region=us-east-1#/findings?macros=all&search=id%3D{}\'>AWS Console: GuardDuty ID {}</a>".format(details['id'],details['id'])
+
 
     ses_client = get_client('ses', None,False)
     template_data = '"awsAccountId":"{}",\
                     "awsRegion":"{}",\
                     "resourceType":"{}",\
                     "resourceId":"{}",\
-                    "description":"{}",\
+                    "DESCRIPTION":"{}",\
                     "severity":"{}",\
                     "eventFirstSeen":"{}",\
                     "eventLastSeen":"{}",\
@@ -147,7 +155,12 @@ def send_email(rule_config,account_tags,details):
     else:
         print("Email not sent. GroupOwner is not valid")
         return
-
+    if re.match(r"[^@]+@[^@]+\.[^@]+", mail_config['SecurityOwner']):
+        print("SecurityOwner {} is valid".format(mail_config['SecurityOwner']))
+    else:
+        print("Email not sent. SecurityOwner is not valid")
+        return
+    print(template_data)
     response = ses_client.send_templated_email(
         Source=os.environ['SES_EMAIL_SENDER'],
         Destination={
@@ -156,6 +169,7 @@ def send_email(rule_config,account_tags,details):
             ],
             'CcAddresses': [
             mail_config['GroupOwner'],
+            mail_config['SecurityOwner']
             ]
     },
     ReplyToAddresses=[
@@ -165,12 +179,13 @@ def send_email(rule_config,account_tags,details):
     TemplateData='{'+template_data+'}',
     ConfigurationSetName=os.environ['SES_CONFIGURATION_SET']
     )
+    print(response)
     return response
 
 def get_config(rule):
     table = dynamodb.Table(os.environ['DYNAMODB_TABLE'])
     dresponse = table.query(
-       KeyConditionExpression=Key('id').eq('default_guardduty')
+       KeyConditionExpression=Key('id').eq('DefaultGuardduty')
     )
     config = {  'NotificationEnabled': False, 
                 'PrimaryOwner': None,

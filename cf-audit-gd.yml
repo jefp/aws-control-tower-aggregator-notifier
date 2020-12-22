@@ -7,6 +7,16 @@ Parameters:
     Default: CustomControlTower-GuardDuty-Notification
     MinLength: '1'
     MaxLength: '255'
+  DynamoDBConfigTableARN:
+    Description: ARN of DynamoDB Config Table
+    Type: String
+    MinLength: '1'
+    MaxLength: '255'
+  DynamoDBConfigTableName:
+    Description: Name of DynamoDB Config Table
+    Type: String
+    MinLength: '1'
+    MaxLength: '255'
   Company:
     Description: Name of the company
     Type: String
@@ -64,7 +74,7 @@ Resources:
   EventRule:
     Type: 'AWS::Events::Rule'
     Properties:
-      Name: detect-guardduty-finding
+      Name: custom-controltower-DetectGuardDutyFinding
       Description: >-
         A CloudWatch Event Rule that triggers on Amazon GuardDuty findings. The
         Event Rule can be used to trigger notifications or remediative actions
@@ -82,7 +92,7 @@ Resources:
   SnsTopic:
     Type: 'AWS::SNS::Topic'
     Properties: 
-      TopicName: custom-controltower-AggregateGDNotifications
+      TopicName: custom-controltower-AggregateGuardDutyNotifications
   SnsTopicPolicy:
     Type: 'AWS::SNS::TopicPolicy'
     Properties:
@@ -144,7 +154,7 @@ Resources:
           COMPANY:
             Ref: Company
           DYNAMODB_TABLE: 
-            Ref: ConfigTableDynamoDB
+            Ref: DynamoDBConfigTableName
           MASTER_ROLE_ARN:
             Ref: MasterRoleARN
           SES_CONFIGURATION_SET:
@@ -183,7 +193,7 @@ Resources:
                 - dynamodb:Scan
                 - dynamodb:GetItem
               Resource: 
-                - "Fn::GetAtt": [ ConfigTableDynamoDB, Arn ]
+                - Ref: DynamoDBConfigTableARN
             - Effect: Allow
               Action:
                 - ses:Send*
@@ -194,3 +204,10 @@ Resources:
                 - sts:AssumeRole
               Resource:
                 - Ref: MasterRoleARN
+Outputs:  
+  NotifyLambdaARN:    
+    Description: The ARN notifier lambda function
+    Value: 
+      Fn::GetAtt:
+      - notifierLambda
+      - Arn
