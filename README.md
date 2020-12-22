@@ -56,14 +56,13 @@ using the **MASTER_BUCKET** and **MASTER_ROLE**
 The **RequiredTags** parameter contains the list of the mandatory tags for the AWS Accounts. 
 
 ##   **In the Audit Account** 
-
+### Enable config notifications
 1. Create SES template in audit account
 ```bash
  aws ses create-template --cli-input-json file://template_config.json
- aws ses create-template --cli-input-json file://template_gd.json
 ```
 
-2. Launch the CloudFormation Stack in the region where you want to have the centralized config notification using the template cf-audit.yml
+2. Launch the CloudFormation Stack in the region where you want to have the centralized config notification using the template cf-audit-config.yml
 
 *You can name the CF as: ControlTowerCustomizationsConfigNotificationAudit*
 
@@ -72,7 +71,7 @@ Copy the values of the CloudFormation Output:
 * NOTIFY_LAMBDA_ARN
 * CONFIG_TABLE
 
-3. Subscribe the NOTIFY_LAMBDA function CustomControlTower-Config-Notification-function to topic **aws-controltower-AggregateSecurityNotifications**
+3. Subscribe the lambda function **CustomControlTower-Config-Notification-function** to topic **aws-controltower-AggregateSecurityNotifications**
 ```bash
   
 # Add Lambda to SNS as subscription
@@ -91,6 +90,43 @@ aws lambda add-permission \
     
 ```
 4. Update the configurations table in the **CONFIG_TABLE**
+
+
+### Enable GuardDuty notifications
+1. Create SES template in audit account
+```bash
+ aws ses create-template --cli-input-json file://template_gd.json
+```
+
+2. Launch the CloudFormation Stack in the region where you want to have the centralized config notification using the template cf-audit-gd.yml
+
+*You can name the CF as: ControlTowerCustomizationsGuardDutyNotificationAudit*
+
+Copy the values of the CloudFormation Output:
+
+* NOTIFY_LAMBDA_ARN
+* CONFIG_TABLE
+
+3. Subscribe the NOTIFY_LAMBDA function **CustomControlTower-GuardDuty-Notification-function** to topic **custom-controltower-AggregateGuardDutyNotifications**
+```bash
+  
+# Add Lambda to SNS as subscription
+aws sns subscribe \
+    --topic-arn arn:aws:sns:REGION:AUDIT_ACCOUNT_ID:custom-controltower-AggregateGuardDutyNotifications \
+    --protocol lambda \
+    --notification-endpoint NOTIFY_LAMBDA_ARN
+
+# Give permissions to Lambda to access that subscription i.e. Add it through triggers
+aws lambda add-permission \
+    --function-name CustomControlTower-GuardDuty-Notification-function \
+    --statement-id config-notification-function-sns-source\
+    --action "lambda:InvokeFunction" \
+    --principal sns.amazonaws.com \
+    --source-arn arn:aws:sns:REGION:AUDIT_ACCOUNT_ID:custom-controltower-AggregateGuardDutyNotifications
+    
+```
+4. Update the configurations table in the **CONFIG_TABLE**
+
 
 
 
