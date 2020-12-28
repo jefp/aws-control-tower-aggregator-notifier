@@ -1,5 +1,5 @@
 # AWS ControlTower Config Aggregator notifier
-The AWS ControlTower Configuration Aggregator Notifier is a solution that allows AWS account administrators that are implemented with [AWS Control Tower](https://aws.amazon.com/controltower/) and relies on the [Customizations for AWS Control Tower Solution] (https://aws.amazon.com/solutions/implementations/customizations-for-aws-control-tower/) to implement an automatednotifications to the AWS Account responsibles about compliance change in your AWS resources.
+The AWS ControlTower Configuration Aggregator Notifier is a solution that allows AWS account administrators that are implemented with [AWS Control Tower](https://aws.amazon.com/controltower/) and relies on the [Customizations for AWS Control Tower Solution](https://aws.amazon.com/solutions/implementations/customizations-for-aws-control-tower/) to implement automated notifications to the AWS Account responsibles about configuration changes that affects the compliance using the [AWS Config](https://aws.amazon.com/config/) to track changes of your AWS resources and the [Amazon Guardduty](https://aws.amazon.com/guardduty/) findings
 
 
 ## Instructions
